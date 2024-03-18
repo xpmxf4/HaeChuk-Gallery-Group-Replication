@@ -1,0 +1,64 @@
+version: '3.7'
+
+services:
+  mysql1:
+    image: my-custom-mysql:8.0.36
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3307:3306"
+    command:
+      - --server-id=1
+      - --log-bin=mysql-bin-1.log
+      - --enforce-gtid-consistency=ON
+      - --gtid-mode=ON
+      - --transaction-write-set-extraction=XXHASH64
+      - --binlog-checksum=NONE
+      - --plugin-load=group_replication.so
+    networks:
+      - innodb-cluster-net
+    container_name: mysql1
+
+  mysql2:
+    image: my-custom-mysql:8.0.36
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3308:3306"
+    command:
+      - --server-id=2
+      - --log-bin=mysql-bin-2.log
+      - --enforce-gtid-consistency=ON
+      - --gtid-mode=ON
+      - --transaction-write-set-extraction=XXHASH64
+      - --binlog-checksum=NONE
+      - --plugin-load=group_replication.so
+    networks:
+      - innodb-cluster-net
+    container_name: mysql2
+
+  mysql3:
+    image: my-custom-mysql:8.0.36
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3309:3306"
+    command:
+      - --server-id=3
+      - --log-bin=mysql-bin-3.log
+      - --enforce-gtid-consistency=ON
+      - --gtid-mode=ON
+      - --transaction-write-set-extraction=XXHASH64
+      - --binlog-checksum=NONE
+      - --plugin-load=group_replication.so
+    networks:
+      - innodb-cluster-net
+    container_name: mysql3
+
+networks:
+  innodb-cluster-net:
+    driver: bridge
+
