@@ -19,6 +19,7 @@ services:
     networks:
       - innodb-cluster-net
     container_name: mysql1
+    restart: always
 
   mysql2:
     image: my-custom-mysql:8.0.36
@@ -38,6 +39,7 @@ services:
     networks:
       - innodb-cluster-net
     container_name: mysql2
+    restart: always
 
   mysql3:
     image: my-custom-mysql:8.0.36
@@ -57,6 +59,7 @@ services:
     networks:
       - innodb-cluster-net
     container_name: mysql3
+    restart: always
 
 networks:
   innodb-cluster-net:
