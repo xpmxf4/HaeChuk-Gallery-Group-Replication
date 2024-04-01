@@ -1,6 +1,28 @@
 version: '3.7'
 
 services:
+  router:
+    image: container-registry.oracle.com/mysql/community-router:8.0
+    platform: linux/amd64
+    environment:
+      - MYSQL_HOST=mysql1 # MySQL Router 가 연결할 기본 MySQL 서버 호스트명
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=1234
+      - MYSQL_INNODB_CLUSTER_MEMBERS=3
+      - MYSQL_CREATE_ROUTER_USER=0
+    ports:
+      - "6446:6446"
+      - "6447:6447"
+    networks:
+      - innodb-cluster-net
+    container_name: router
+    restart: always
+    depends_on:
+      - mysql1
+      - mysql2
+      - mysql3
+
   mysql1:
     image: my-custom-mysql:8.0.36
     environment:
