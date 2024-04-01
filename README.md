@@ -1,6 +1,6 @@
 # Docker를 이용한 MySQL Group Replication 자동 구축
 
-이 프로젝트는 Docker 환경에서 MySQL Group Replication을 자동으로 구축하는 방법을 제공합니다. 
+이 프로젝트는 [해축갤 프로젝트](https://github.com/xpmxf4/HaeChuk-Gallery) 의 서브 프로젝트로, DB Replication 을 안드로이드 공기계에 편하게 배포하기 위한 프로젝트입니다.
 
 "Real MySQL 2" 책을 참고하여, Docker를 사용하여 Group Replication을 신속하고 쉽게 설정할 수 있도록 설계되었습니다.
 
