@@ -13,14 +13,24 @@
 
 ### 1. Docker 이미지 빌드
 
-- `docker-entrypoint.sh` 스크립트를 사용하여 MySQL 8.0.36 기반의 이미지를 준비합니다. 
+- 필요한 이미지는 총 2 가지 입니다.
+  ### **MySQL Server + MySQL Shell**
+    - `docker-entrypoint.sh` 스크립트를 사용하여 MySQL 8.0.36 기반의 이미지를 준비합니다.
   이 스크립트는 MySQL 설정과 초기 실행을 위한 로직을 포함합니다.
 
-- Dockerfile을 통해 Docker 이미지를 빌드합니다.
+    - Dockerfile을 통해 Docker(MySQL+MySQL Shell) 이미지를 빌드합니다.
 
-  ```bash
-  docker build -t my-custom-mysql:8.0.36 .
-  ```
+    ```bash
+    docker build -t my-custom-mysql:8.0.36 .
+    ```
+
+    ### MySQL Router
+
+    - MySQL Router 이미지를 다운 받습니다.
+
+    ```bash
+    docker pull container-registry.oracle.com/mysql/community-router:tag
+    ```
 
 ### 2. MySQL Group Replication 설치 및 실행
 
@@ -32,19 +42,12 @@
 
   1. Docker 컨테이너 시작
   2. MySQL 서버 준비 대기
-  3. MySQL 인스턴스 구성 (`dba.configureInstance`)
-  4. 클러스터 생성 (`dba.createCluster`) 및 인스턴스 추가 (`cluster.addInstance`)
-  5. 클러스터 상태 검사 및 출력
+  3. MySQL 서버 실행
+  4. MySQL Router 실행
+  5. MySQL 인스턴스 구성 (`dba.configureInstance`)
+  6. 클러스터 생성 (`dba.createCluster`) 및 인스턴스 추가 (`cluster.addInstance`)
+  7. 클러스터 상태 검사 및 출력
 
-## 실행 방법
-
-```bash
-# 이미지 빌드
-docker build -t my-custom-mysql:8.0.36 .
-
-# Group Replication 설치 및 구성
-./install_group_replication.sh
-```
 
 ## Group Replication 설정
 
@@ -53,12 +56,8 @@ docker build -t my-custom-mysql:8.0.36 .
 - 기본적으로 1개의 프라이머리 노드와 2개의 세컨더리 노드로 구성됩니다.
 
 - 노드를 추가하고자 할 경우, 
-
-  ```
-  docker-compose.yml
-  ```
-
-   파일에 다음과 같이 추가합니다:
+  
+  `docker-compose.yml` 파일에 다음과 같이 추가합니다:
 
   ```yaml
   services:
@@ -76,7 +75,7 @@ docker build -t my-custom-mysql:8.0.36 .
         - --binlog-checksum=NONE
         - --plugin-load=group_replication.so
       ports:
-        - "3310:3306"
+        - "3310:3306" # Port 는 자유
       # 기타 필요한 설정 추가
   ```
 
