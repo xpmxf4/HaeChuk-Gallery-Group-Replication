@@ -1,77 +1,26 @@
 #!/bin/bash
 
-# MySQL ¼­¹ö°¡ ÁØºñµÉ ¶§±îÁö ±â´Ù¸²
-wait_for_mysql() {
-    container_name=$1
-    for i in {1..30}; do
-        if docker exec $container_name mysqladmin ping -h "localhost" --silent; then
-            echo "$container_name is up and running."
-            return 0
-        else
-            echo "Waiting for $container_name to be ready..."
-            sleep 1
-        fi
-    done
-    echo "Failed to connect to $container_name after several attempts."
-    return 1
-}
-
-# MySQL ÄÁÅ×ÀÌ³Ê ½ÃÀÛ
+# MySQL ì»¨í…Œì´ë„ˆ ì‹¤í–‰ ë° ìƒíƒœ í™•ì¸
 docker-compose up -d
-
-if [ $? -ne 0 ]; then
-    echo "Docker compose failed to start."
-    exit 1
-fi
-
-sleep 10 # ÄÁÅ×ÀÌ³Ê°¡ ¿Ã¶ó¿À´Â ½Ã°£ ±â´Ù¸²
-
-# ÄÁÅ×ÀÌ³Ê »óÅÂ È®ÀÎ
 CONTAINER_CHECK=$(docker-compose ps | grep 'Up')
-if [ -z "$CONTAINER_CHECK" ]; then
-    echo "One or more containers failed to start."
-    exit 1
-else
-    echo "All containers are up and running."
-fi
 
-wait_for_mysql "mysql1" && \
-docker exec -it mysql1 mysqlsh --user root --password=1234 --execute "dba.configureInstance('root@localhost:3306');" && \
-docker exec -it mysql1 mysqlsh --user root --password=1234 --execute "dba.configureInstance('root@mysql2:3306');" && \
-docker exec -it mysql1 mysqlsh --user root --password=1234 --execute "dba.configureInstance('root@mysql3:3306');"
+# ì¸ìŠ¤í„´ìŠ¤ êµ¬ì„±
+for i in {1..3}; do
+  docker exec -it mysql1 mysqlsh --user root --password=$MYSQL_ROOT_PASSWORD \
+    --execute "dba.configureInstance('root@mysql$i:3306');"
+done
 
-# Å¬·¯½ºÅÍ »ı¼º
-if ! docker exec -it mysql1 mysqlsh --user root --password=1234 --execute "var cluster = dba.createCluster('testCluster');"
-then
-    echo "Failed to create cluster."
-    exit 1
-fi
+# í´ëŸ¬ìŠ¤í„° ìƒì„± ë° ì¸ìŠ¤í„´ìŠ¤ ì¶”ê°€
+docker exec -it mysql1 mysqlsh --user root --password=$MYSQL_ROOT_PASSWORD \
+  --execute "var cluster = dba.createCluster('testCluster');"
 
-# Ã¹ ¹øÂ° Ãß°¡ ÀÎ½ºÅÏ½º¸¦ Å¬·¯½ºÅÍ¿¡ Ãß°¡
-if ! docker exec -it mysql1 mysqlsh --user root --password=1234 --execute "dba.getCluster().addInstance('root@mysql2:3306', {recoveryMethod: 'auto'});"
-then
-	docker restart mysql2
-	sleep 5 # Àç½ÃÀÛÀÌ ¿Ï·áµÉ ¶§±îÁö ±â´Ù¸²
-    docker exec -it mysql1 mysqlsh --user root --password=1234 --execute "dba.getCluster().rescan();"
-fi
+for i in {2..3}; do
+  docker exec -it mysql1 mysqlsh --user root --password=$MYSQL_ROOT_PASSWORD \
+    --execute "dba.getCluster().addInstance('root@mysql$i:3306', {recoveryMethod: 'auto'});"
+done
 
-# µÎ ¹øÂ° Ãß°¡ ÀÎ½ºÅÏ½º¸¦ Å¬·¯½ºÅÍ¿¡ Ãß°¡
-if ! docker exec -it mysql1 mysqlsh --user root --password=1234 --execute "dba.getCluster().addInstance('root@mysql3:3306', {recoveryMethod: 'auto'});"
-then
-	docker restart mysql3
-	sleep 5 # Àç½ÃÀÛÀÌ ¿Ï·áµÉ ¶§±îÁö ±â´Ù¸²
-    docker exec -it mysql1 mysqlsh --user root --password=1234 --execute "dba.getCluster().rescan();"
-fi
-
-
-# Å¬·¯½ºÅÍ ÃÖÁ¾ °Ë»ç
-if ! docker exec -it mysql1 mysqlsh --user root --password=1234 --execute "var cluster = dba.getCluster(); cluster.rescan();"
-then
-    echo "Failed to rescan the cluster."
-    exit 1
-fi
-
-# Å¬·¯½ºÅÍ »óÅÂ °Ë»ç ¹× Ãâ·Â
-docker exec mysql1 mysqlsh --user root --password=1234 --execute "var cluster = dba.getCluster(); print(JSON.stringify(cluster.status(), null, 2));"
+# í´ëŸ¬ìŠ¤í„° ìƒíƒœ ê²€ì‚¬ ë° ì¶œë ¥
+docker exec -it mysql1 mysqlsh --user root --password=$MYSQL_ROOT_PASSWORD \
+  --execute "var cluster = dba.getCluster(); cluster.rescan(); print(JSON.stringify(cluster.status(), null, 2));"
 
 echo "MySQL cluster setup completed successfully."
